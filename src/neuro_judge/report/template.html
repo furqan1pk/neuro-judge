@@ -5,124 +5,437 @@
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>neuro-judge Report — {{ run.run_id }}</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#0f1117;--card:#1a1e30;--border:#2a2e45;--text:#e8e8f0;--muted:#8888a8;--accent:#6366f1;--green:#10b981;--amber:#f59e0b;--rose:#f43f5e;--cyan:#06b6d4}
-body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);padding:2rem;max-width:1200px;margin:0 auto;line-height:1.6}
-h1{font-size:1.8rem;font-weight:800;margin-bottom:.5rem}
-h2{font-size:1.2rem;font-weight:700;margin:2rem 0 1rem;color:var(--accent)}
-.subtitle{color:var(--muted);font-size:.9rem;margin-bottom:2rem}
-.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem;margin-bottom:2rem}
-.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.25rem}
-.card .label{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
-.card .value{font-size:1.8rem;font-weight:800;margin-top:.25rem}
-.card .value.green{color:var(--green)}.card .value.amber{color:var(--amber)}.card .value.rose{color:var(--rose)}.card .value.cyan{color:var(--cyan)}
-.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:2rem}
-.chart-box{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.25rem}
-.chart-box h3{font-size:.9rem;font-weight:600;margin-bottom:1rem}
-.chart-box canvas{max-height:300px}
-table{width:100%;border-collapse:collapse;margin-top:1rem}
-th{text-align:left;padding:.75rem;font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border)}
-td{padding:.75rem;font-size:.85rem;border-bottom:1px solid var(--border)}
-tr:hover{background:rgba(99,102,241,.05)}
-.score-badge{display:inline-block;padding:.15rem .5rem;border-radius:6px;font-weight:600;font-size:.8rem}
-.score-high{background:rgba(16,185,129,.15);color:var(--green)}
-.score-mid{background:rgba(245,158,11,.15);color:var(--amber)}
-.score-low{background:rgba(244,63,94,.15);color:var(--rose)}
-.reasoning{font-size:.78rem;color:var(--muted);margin-top:.25rem;max-width:500px}
-.footer{text-align:center;padding:2rem;color:var(--muted);font-size:.78rem;margin-top:3rem;border-top:1px solid var(--border)}
-@media(max-width:768px){.chart-row{grid-template-columns:1fr}.cards{grid-template-columns:1fr 1fr}}
+:root {
+    --bg: #fafbfc;
+    --bg-card: #ffffff;
+    --bg-header: #0f172a;
+    --border: #e2e8f0;
+    --border-light: #f1f5f9;
+    --text: #1e293b;
+    --text-secondary: #64748b;
+    --text-muted: #94a3b8;
+    --accent: #4f46e5;
+    --accent-light: #6366f1;
+    --green: #059669;
+    --green-bg: #ecfdf5;
+    --green-border: #a7f3d0;
+    --amber: #d97706;
+    --amber-bg: #fffbeb;
+    --amber-border: #fde68a;
+    --rose: #dc2626;
+    --rose-bg: #fef2f2;
+    --rose-border: #fecaca;
+    --blue: #2563eb;
+    --blue-bg: #eff6ff;
+    --radius: 12px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06);
+}
+body {
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+}
+
+/* Header */
+.header {
+    background: var(--bg-header);
+    color: #fff;
+    padding: 2.5rem 2rem 2rem;
+}
+.header-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+}
+.header h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.header h1 .logo {
+    background: var(--accent);
+    color: #fff;
+    padding: 0.2rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+}
+.header-meta {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.75rem;
+}
+.header-meta .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.82rem;
+    color: #94a3b8;
+}
+.header-meta .meta-value {
+    color: #e2e8f0;
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+/* Main Content */
+.main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+/* Score Cards */
+.score-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.75rem;
+    margin: -3rem 0 2rem;
+    position: relative;
+    z-index: 1;
+}
+.score-card {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border);
+    text-align: center;
+}
+.score-card .score-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+}
+.score-card .score-value {
+    font-size: 2rem;
+    font-weight: 800;
+    font-family: 'JetBrains Mono', monospace;
+}
+.score-card .score-bar {
+    height: 4px;
+    border-radius: 2px;
+    background: var(--border-light);
+    margin-top: 0.75rem;
+    overflow: hidden;
+}
+.score-card .score-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.6s ease;
+}
+.score-card.green .score-value { color: var(--green); }
+.score-card.green .score-bar-fill { background: var(--green); }
+.score-card.amber .score-value { color: var(--amber); }
+.score-card.amber .score-bar-fill { background: var(--amber); }
+.score-card.rose .score-value { color: var(--rose); }
+.score-card.rose .score-bar-fill { background: var(--rose); }
+.score-card.blue .score-value { color: var(--blue); }
+.score-card.blue .score-bar-fill { background: var(--blue); }
+
+/* Section */
+.section-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 2rem 0 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.section-title .section-icon {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    font-size: 0.85rem;
+}
+
+/* Charts */
+.chart-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+.chart-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+}
+.chart-card h3 {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 1rem;
+}
+.chart-card canvas { max-height: 280px; }
+
+/* Results Table */
+.results-table {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+}
+.results-table table { width: 100%; border-collapse: collapse; }
+.results-table th {
+    text-align: left;
+    padding: 0.75rem 1rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    background: #f8fafc;
+    border-bottom: 1px solid var(--border);
+}
+.results-table td {
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
+    border-bottom: 1px solid var(--border-light);
+    vertical-align: top;
+}
+.results-table .sample-row { background: #fff; }
+.results-table .sample-row:hover { background: #f8fafc; }
+.results-table .sample-id {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--accent);
+}
+.results-table .sample-input {
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+    max-width: 350px;
+}
+
+/* Score Badges */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 42px;
+    padding: 0.25rem 0.6rem;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 0.82rem;
+    font-family: 'JetBrains Mono', monospace;
+}
+.badge-green { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
+.badge-amber { background: var(--amber-bg); color: var(--amber); border: 1px solid var(--amber-border); }
+.badge-rose { background: var(--rose-bg); color: var(--rose); border: 1px solid var(--rose-border); }
+
+/* Reasoning rows */
+.reasoning-row td {
+    padding: 0.4rem 1rem 0.75rem 1rem !important;
+    border-bottom: none !important;
+    background: #f8fafc;
+}
+.reasoning-row + .reasoning-row td { padding-top: 0 !important; }
+.reasoning-row:last-of-type td { border-bottom: 1px solid var(--border) !important; }
+.reasoning-bubble {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    padding: 0.6rem 0.75rem;
+    background: #fff;
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    margin-bottom: 0.4rem;
+}
+.reasoning-badge {
+    flex-shrink: 0;
+    font-size: 0.65rem;
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+.reasoning-badge.crit-green { background: var(--green-bg); color: var(--green); }
+.reasoning-badge.crit-amber { background: var(--amber-bg); color: var(--amber); }
+.reasoning-badge.crit-rose { background: var(--rose-bg); color: var(--rose); }
+.reasoning-text {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+.reasoning-model {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    margin-top: 0.25rem;
+}
+
+/* Toggle */
+.toggle-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+}
+.toggle-btn:hover { background: #f1f5f9; color: var(--text); }
+
+/* Footer */
+.footer {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    margin-top: 2rem;
+}
+.footer a { color: var(--accent); text-decoration: none; }
+.footer a:hover { text-decoration: underline; }
+
+@media (max-width: 768px) {
+    .chart-grid { grid-template-columns: 1fr; }
+    .score-cards { grid-template-columns: 1fr 1fr; }
+    .header { padding: 1.5rem 1rem; }
+    .main { padding: 1rem; }
+}
 </style>
 </head>
 <body>
 
-<h1>neuro-judge Evaluation Report</h1>
-<p class="subtitle">Run {{ run.run_id }} &mdash; {{ run.timestamp[:19] }} &mdash; {{ run.total_samples }} samples &mdash; {{ run.judges|length }} judge(s)</p>
+<!-- Header -->
+<div class="header">
+    <div class="header-inner">
+        <h1><span class="logo">NJ</span> Evaluation Report</h1>
+        <div class="header-meta">
+            <div class="meta-item">Run <span class="meta-value">{{ run.run_id }}</span></div>
+            <div class="meta-item">Date <span class="meta-value">{{ run.timestamp[:10] }}</span></div>
+            <div class="meta-item">Samples <span class="meta-value">{{ run.total_samples }}</span></div>
+            <div class="meta-item">Judges <span class="meta-value">{{ run.judges|length }}</span></div>
+            <div class="meta-item">Cost <span class="meta-value">${{ "%.4f"|format(run.total_cost_usd) }}</span></div>
+            <div class="meta-item">Time <span class="meta-value">{{ "%.1f"|format(run.total_time_seconds) }}s</span></div>
+        </div>
+    </div>
+</div>
 
-<!-- Summary Cards -->
-<div class="cards">
+<div class="main">
+
+<!-- Score Cards -->
+<div class="score-cards">
 {% for name, score in run.summary.items() %}
-<div class="card">
-    <div class="label">{{ name }}</div>
-    <div class="value {% if score >= 4 %}green{% elif score >= 3 %}amber{% else %}rose{% endif %}">{{ "%.2f"|format(score) }}</div>
+<div class="score-card {% if score >= 4 %}green{% elif score >= 3 %}amber{% else %}rose{% endif %}">
+    <div class="score-label">{{ name }}</div>
+    <div class="score-value">{{ "%.1f"|format(score) }}</div>
+    <div class="score-bar"><div class="score-bar-fill" style="width:{{ (score/5*100)|int }}%"></div></div>
 </div>
 {% endfor %}
-<div class="card">
-    <div class="label">Total Cost</div>
-    <div class="value cyan">${{ "%.4f"|format(run.total_cost_usd) }}</div>
-</div>
-<div class="card">
-    <div class="label">Time</div>
-    <div class="value">{{ "%.1f"|format(run.total_time_seconds) }}s</div>
+<div class="score-card blue">
+    <div class="score-label">Total Cost</div>
+    <div class="score-value">${{ "%.3f"|format(run.total_cost_usd) }}</div>
+    <div class="score-bar"><div class="score-bar-fill" style="width:100%"></div></div>
 </div>
 </div>
 
 <!-- Charts -->
-<div class="chart-row">
-<div class="chart-box">
-    <h3>Criteria Scores</h3>
-    <canvas id="radarChart"></canvas>
+<div class="section-title">
+    <span class="section-icon" style="background:#eff6ff;color:#2563eb">&#x1F4CA;</span>
+    Visualizations
 </div>
-<div class="chart-box">
-    <h3>Cost by Model</h3>
-    <canvas id="costChart"></canvas>
-</div>
-</div>
-
-<div class="chart-row">
-<div class="chart-box">
-    <h3>Score Distribution</h3>
-    <canvas id="distChart"></canvas>
-</div>
-<div class="chart-box">
-    <h3>Judge Agreement</h3>
-    <canvas id="judgeChart"></canvas>
-</div>
+<div class="chart-grid">
+    <div class="chart-card">
+        <h3>Criteria Overview</h3>
+        <canvas id="radarChart"></canvas>
+    </div>
+    <div class="chart-card">
+        <h3>Score Distribution</h3>
+        <canvas id="distChart"></canvas>
+    </div>
+    <div class="chart-card">
+        <h3>Cost Breakdown</h3>
+        <canvas id="costChart"></canvas>
+    </div>
+    <div class="chart-card">
+        <h3>Judge Scores by Criterion</h3>
+        <canvas id="judgeChart"></canvas>
+    </div>
 </div>
 
 <!-- Detailed Results -->
-<h2>Detailed Results</h2>
+<div class="section-title">
+    <span class="section-icon" style="background:#f0fdf4;color:#059669">&#x2705;</span>
+    Detailed Results
+</div>
+<div class="results-table">
 <table>
 <thead>
 <tr>
-    <th>Sample</th>
+    <th style="width:60px">ID</th>
     <th>Input</th>
-    {% for c in criteria_names %}<th>{{ c }}</th>{% endfor %}
+    {% for c in criteria_names %}<th style="width:100px;text-align:center">{{ c }}</th>{% endfor %}
+    <th style="width:60px"></th>
 </tr>
 </thead>
 <tbody>
 {% for result in run.results %}
-<tr>
-    <td>{{ result.sample_id }}</td>
-    <td>{{ result.input[:60] }}{% if result.input|length > 60 %}...{% endif %}</td>
+<tr class="sample-row" id="row-{{ result.sample_id }}">
+    <td class="sample-id">{{ result.sample_id }}</td>
+    <td class="sample-input">{{ result.input[:80] }}{% if result.input|length > 80 %}...{% endif %}</td>
     {% for c in criteria_names %}
     {% set s = result.scores_by_criterion.get(c, 0) %}
-    <td><span class="score-badge {% if s >= 4 %}score-high{% elif s >= 3 %}score-mid{% else %}score-low{% endif %}">{{ "%.1f"|format(s) }}</span></td>
+    <td style="text-align:center"><span class="badge {% if s >= 4 %}badge-green{% elif s >= 3 %}badge-amber{% else %}badge-rose{% endif %}">{{ "%.0f"|format(s) }}</span></td>
     {% endfor %}
+    <td><button class="toggle-btn" onclick="toggleReasoning('{{ result.sample_id }}')">why?</button></td>
 </tr>
-{% for js in result.judge_scores %}
-{% if loop.index <= 3 %}
-<tr>
+<tr class="reasoning-row" id="reasoning-{{ result.sample_id }}" style="display:none">
     <td></td>
     <td colspan="{{ criteria_names|length + 1 }}">
-        <span style="color:var(--accent);font-size:.75rem">{{ js.judge_provider }}/{{ js.judge_model }} &mdash; {{ js.criterion }}:</span>
-        <span class="reasoning">{{ js.reasoning }}</span>
+    {% for js in result.judge_scores %}
+        <div class="reasoning-bubble">
+            <span class="reasoning-badge {% if js.score >= 4 %}crit-green{% elif js.score >= 3 %}crit-amber{% else %}crit-rose{% endif %}">{{ js.criterion }} {{ js.score }}/5</span>
+            <div>
+                <div class="reasoning-text">{{ js.reasoning }}</div>
+                <div class="reasoning-model">{{ js.judge_provider }}/{{ js.judge_model }} &middot; {{ "%.0f"|format(js.latency_ms) }}ms &middot; ${{ "%.4f"|format(js.cost_usd) }}</div>
+            </div>
+        </div>
+    {% endfor %}
     </td>
 </tr>
-{% endif %}
-{% endfor %}
 {% endfor %}
 </tbody>
 </table>
+</div>
+
+</div>
 
 <div class="footer">
-    Generated by <a href="https://github.com/furqan1pk/neuro-judge" style="color:var(--accent)">neuro-judge</a> v0.1.0
+    Generated by <a href="https://github.com/furqan1pk/neuro-judge">neuro-judge</a> v0.1.0 &middot; LLM-as-a-Judge Evaluation Framework
 </div>
 
 <script>
-const colors = ['#6366f1','#10b981','#f59e0b','#f43f5e','#06b6d4','#8b5cf6','#ec4899','#14b8a6'];
-Chart.defaults.color = '#8888a8';
-Chart.defaults.borderColor = '#2a2e45';
+const palette = ['#4f46e5','#059669','#d97706','#dc2626','#2563eb','#7c3aed','#db2777','#0891b2'];
 
 // Radar
 new Chart(document.getElementById('radarChart'), {
@@ -132,55 +445,80 @@ new Chart(document.getElementById('radarChart'), {
         datasets: [{
             label: 'Mean Score',
             data: {{ criteria_scores|tojson }},
-            borderColor: '#6366f1',
-            backgroundColor: 'rgba(99,102,241,0.15)',
-            pointBackgroundColor: '#6366f1',
+            borderColor: '#4f46e5',
+            backgroundColor: 'rgba(79,70,229,0.1)',
+            pointBackgroundColor: '#4f46e5',
+            pointRadius: 5,
+            borderWidth: 2,
         }]
     },
-    options: { scales: { r: { min: 0, max: 5, ticks: { stepSize: 1 } } }, plugins: { legend: { display: false } } }
+    options: {
+        scales: { r: { min: 0, max: 5, ticks: { stepSize: 1, font: { size: 11 } }, pointLabels: { font: { size: 12, weight: '600' } } } },
+        plugins: { legend: { display: false } }
+    }
 });
 
 // Cost doughnut
-const costLabels = {{ cost_breakdown.keys()|list|tojson }};
-const costValues = {{ cost_breakdown.values()|list|tojson }};
 new Chart(document.getElementById('costChart'), {
     type: 'doughnut',
     data: {
-        labels: costLabels,
-        datasets: [{ data: costValues, backgroundColor: colors.slice(0, costLabels.length) }]
+        labels: {{ cost_breakdown.keys()|list|tojson }},
+        datasets: [{ data: {{ cost_breakdown.values()|list|tojson }}, backgroundColor: palette, borderWidth: 0 }]
     },
-    options: { plugins: { legend: { position: 'bottom' } } }
+    options: { cutout: '65%', plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 16 } } } }
 });
 
-// Score distribution (stacked bar)
-const distLabels = ['1','2','3','4','5'];
+// Score distribution
+const distLabels = ['1 (Low)','2','3','4','5 (High)'];
 const distDatasets = [];
 let ci = 0;
 {% for criterion, dist in score_distributions.items() %}
-distDatasets.push({ label: '{{ criterion }}', data: {{ dist|tojson }}, backgroundColor: colors[ci++ % colors.length] });
+distDatasets.push({ label: '{{ criterion }}', data: {{ dist|tojson }}, backgroundColor: palette[ci % palette.length], borderRadius: 4 });
+ci++;
 {% endfor %}
 new Chart(document.getElementById('distChart'), {
     type: 'bar',
     data: { labels: distLabels, datasets: distDatasets },
-    options: { scales: { x: { stacked: true }, y: { stacked: true } }, plugins: { legend: { position: 'bottom' } } }
+    options: {
+        scales: { x: { stacked: true, grid: { display: false } }, y: { stacked: true, ticks: { stepSize: 1 } } },
+        plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 16 } } },
+        borderRadius: 4,
+    }
 });
 
-// Judge agreement
-const judgeLabels = {{ criteria_names|tojson }};
+// Judge scores
 const judgeDatasets = [];
 let ji = 0;
 {% for judge, means in judge_means.items() %}
 judgeDatasets.push({
     label: '{{ judge }}',
     data: {{ means.values()|list|tojson }},
-    backgroundColor: colors[ji++ % colors.length],
+    backgroundColor: palette[ji % palette.length],
+    borderRadius: 4,
 });
+ji++;
 {% endfor %}
 new Chart(document.getElementById('judgeChart'), {
     type: 'bar',
-    data: { labels: judgeLabels, datasets: judgeDatasets },
-    options: { scales: { y: { min: 0, max: 5 } }, plugins: { legend: { position: 'bottom' } } }
+    data: { labels: {{ criteria_names|tojson }}, datasets: judgeDatasets },
+    options: {
+        scales: { y: { min: 0, max: 5, ticks: { stepSize: 1 } }, x: { grid: { display: false } } },
+        plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 16 } } }
+    }
 });
+
+// Toggle reasoning rows
+function toggleReasoning(id) {
+    const row = document.getElementById('reasoning-' + id);
+    const btn = document.querySelector('#row-' + id + ' .toggle-btn');
+    if (row.style.display === 'none') {
+        row.style.display = 'table-row';
+        btn.textContent = 'hide';
+    } else {
+        row.style.display = 'none';
+        btn.textContent = 'why?';
+    }
+}
 </script>
 </body>
 </html>
