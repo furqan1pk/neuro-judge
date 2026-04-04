@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>neuro-judge Report — {{ run.run_id }}</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0f1117;--card:#1a1e30;--border:#2a2e45;--text:#e8e8f0;--muted:#8888a8;--accent:#6366f1;--green:#10b981;--amber:#f59e0b;--rose:#f43f5e;--cyan:#06b6d4}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);padding:2rem;max-width:1200px;margin:0 auto;line-height:1.6}
+h1{font-size:1.8rem;font-weight:800;margin-bottom:.5rem}
+h2{font-size:1.2rem;font-weight:700;margin:2rem 0 1rem;color:var(--accent)}
+.subtitle{color:var(--muted);font-size:.9rem;margin-bottom:2rem}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem;margin-bottom:2rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.25rem}
+.card .label{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.card .value{font-size:1.8rem;font-weight:800;margin-top:.25rem}
+.card .value.green{color:var(--green)}.card .value.amber{color:var(--amber)}.card .value.rose{color:var(--rose)}.card .value.cyan{color:var(--cyan)}
+.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:2rem}
+.chart-box{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.25rem}
+.chart-box h3{font-size:.9rem;font-weight:600;margin-bottom:1rem}
+.chart-box canvas{max-height:300px}
+table{width:100%;border-collapse:collapse;margin-top:1rem}
+th{text-align:left;padding:.75rem;font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border)}
+td{padding:.75rem;font-size:.85rem;border-bottom:1px solid var(--border)}
+tr:hover{background:rgba(99,102,241,.05)}
+.score-badge{display:inline-block;padding:.15rem .5rem;border-radius:6px;font-weight:600;font-size:.8rem}
+.score-high{background:rgba(16,185,129,.15);color:var(--green)}
+.score-mid{background:rgba(245,158,11,.15);color:var(--amber)}
+.score-low{background:rgba(244,63,94,.15);color:var(--rose)}
+.reasoning{font-size:.78rem;color:var(--muted);margin-top:.25rem;max-width:500px}
+.footer{text-align:center;padding:2rem;color:var(--muted);font-size:.78rem;margin-top:3rem;border-top:1px solid var(--border)}
+@media(max-width:768px){.chart-row{grid-template-columns:1fr}.cards{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<h1>neuro-judge Evaluation Report</h1>
+<p class="subtitle">Run {{ run.run_id }} &mdash; {{ run.timestamp[:19] }} &mdash; {{ run.total_samples }} samples &mdash; {{ run.judges|length }} judge(s)</p>
+
+<!-- Summary Cards -->
+<div class="cards">
+{% for name, score in run.summary.items() %}
+<div class="card">
+    <div class="label">{{ name }}</div>
+    <div class="value {% if score >= 4 %}green{% elif score >= 3 %}amber{% else %}rose{% endif %}">{{ "%.2f"|format(score) }}</div>
+</div>
+{% endfor %}
+<div class="card">
+    <div class="label">Total Cost</div>
+    <div class="value cyan">${{ "%.4f"|format(run.total_cost_usd) }}</div>
+</div>
+<div class="card">
+    <div class="label">Time</div>
+    <div class="value">{{ "%.1f"|format(run.total_time_seconds) }}s</div>
+</div>
+</div>
+
+<!-- Charts -->
+<div class="chart-row">
+<div class="chart-box">
+    <h3>Criteria Scores</h3>
+    <canvas id="radarChart"></canvas>
+</div>
+<div class="chart-box">
+    <h3>Cost by Model</h3>
+    <canvas id="costChart"></canvas>
+</div>
+</div>
+
+<div class="chart-row">
+<div class="chart-box">
+    <h3>Score Distribution</h3>
+    <canvas id="distChart"></canvas>
+</div>
+<div class="chart-box">
+    <h3>Judge Agreement</h3>
+    <canvas id="judgeChart"></canvas>
+</div>
+</div>
+
+<!-- Detailed Results -->
+<h2>Detailed Results</h2>
+<table>
+<thead>
+<tr>
+    <th>Sample</th>
+    <th>Input</th>
+    {% for c in criteria_names %}<th>{{ c }}</th>{% endfor %}
+</tr>
+</thead>
+<tbody>
+{% for result in run.results %}
+<tr>
+    <td>{{ result.sample_id }}</td>
+    <td>{{ result.input[:60] }}{% if result.input|length > 60 %}...{% endif %}</td>
+    {% for c in criteria_names %}
+    {% set s = result.scores_by_criterion.get(c, 0) %}
+    <td><span class="score-badge {% if s >= 4 %}score-high{% elif s >= 3 %}score-mid{% else %}score-low{% endif %}">{{ "%.1f"|format(s) }}</span></td>
+    {% endfor %}
+</tr>
+{% for js in result.judge_scores %}
+{% if loop.index <= 3 %}
+<tr>
+    <td></td>
+    <td colspan="{{ criteria_names|length + 1 }}">
+        <span style="color:var(--accent);font-size:.75rem">{{ js.judge_provider }}/{{ js.judge_model }} &mdash; {{ js.criterion }}:</span>
+        <span class="reasoning">{{ js.reasoning }}</span>
+    </td>
+</tr>
+{% endif %}
+{% endfor %}
+{% endfor %}
+</tbody>
+</table>
+
+<div class="footer">
+    Generated by <a href="https://github.com/furqan1pk/neuro-judge" style="color:var(--accent)">neuro-judge</a> v0.1.0
+</div>
+
+<script>
+const colors = ['#6366f1','#10b981','#f59e0b','#f43f5e','#06b6d4','#8b5cf6','#ec4899','#14b8a6'];
+Chart.defaults.color = '#8888a8';
+Chart.defaults.borderColor = '#2a2e45';
+
+// Radar
+new Chart(document.getElementById('radarChart'), {
+    type: 'radar',
+    data: {
+        labels: {{ criteria_names|tojson }},
+        datasets: [{
+            label: 'Mean Score',
+            data: {{ criteria_scores|tojson }},
+            borderColor: '#6366f1',
+            backgroundColor: 'rgba(99,102,241,0.15)',
+            pointBackgroundColor: '#6366f1',
+        }]
+    },
+    options: { scales: { r: { min: 0, max: 5, ticks: { stepSize: 1 } } }, plugins: { legend: { display: false } } }
+});
+
+// Cost doughnut
+const costLabels = {{ cost_breakdown.keys()|list|tojson }};
+const costValues = {{ cost_breakdown.values()|list|tojson }};
+new Chart(document.getElementById('costChart'), {
+    type: 'doughnut',
+    data: {
+        labels: costLabels,
+        datasets: [{ data: costValues, backgroundColor: colors.slice(0, costLabels.length) }]
+    },
+    options: { plugins: { legend: { position: 'bottom' } } }
+});
+
+// Score distribution (stacked bar)
+const distLabels = ['1','2','3','4','5'];
+const distDatasets = [];
+let ci = 0;
+{% for criterion, dist in score_distributions.items() %}
+distDatasets.push({ label: '{{ criterion }}', data: {{ dist|tojson }}, backgroundColor: colors[ci++ % colors.length] });
+{% endfor %}
+new Chart(document.getElementById('distChart'), {
+    type: 'bar',
+    data: { labels: distLabels, datasets: distDatasets },
+    options: { scales: { x: { stacked: true }, y: { stacked: true } }, plugins: { legend: { position: 'bottom' } } }
+});
+
+// Judge agreement
+const judgeLabels = {{ criteria_names|tojson }};
+const judgeDatasets = [];
+let ji = 0;
+{% for judge, means in judge_means.items() %}
+judgeDatasets.push({
+    label: '{{ judge }}',
+    data: {{ means.values()|list|tojson }},
+    backgroundColor: colors[ji++ % colors.length],
+});
+{% endfor %}
+new Chart(document.getElementById('judgeChart'), {
+    type: 'bar',
+    data: { labels: judgeLabels, datasets: judgeDatasets },
+    options: { scales: { y: { min: 0, max: 5 } }, plugins: { legend: { position: 'bottom' } } }
+});
+</script>
+</body>
+</html>

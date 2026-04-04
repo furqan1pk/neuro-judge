@@ -1,0 +1,56 @@
+name: LLM Evaluation
+
+on:
+  pull_request:
+    paths:
+      - '**.jsonl'
+      - 'eval.yaml'
+  workflow_dispatch:
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install neuro-judge
+        run: pip install neuro-judge
+
+      - name: Run evaluation
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          neuro-judge run --config eval.yaml --output-dir ./reports
+
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-report
+          path: reports/
+
+      - name: Post summary to PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const reports = fs.readdirSync('reports').filter(f => f.endsWith('.json'));
+            if (reports.length === 0) return;
+            const data = JSON.parse(fs.readFileSync(`reports/${reports[0]}`));
+            let body = '## neuro-judge Evaluation Results\n\n';
+            body += `| Criterion | Score |\n|-----------|-------|\n`;
+            for (const [k, v] of Object.entries(data.summary)) {
+              const emoji = v >= 4 ? '🟢' : v >= 3 ? '🟡' : '🔴';
+              body += `| ${k} | ${emoji} ${v.toFixed(2)} / 5.00 |\n`;
+            }
+            body += `\n**Cost:** $${data.total_cost_usd.toFixed(4)} | **Samples:** ${data.total_samples}`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body
+            });

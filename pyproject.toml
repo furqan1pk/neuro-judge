@@ -1,0 +1,53 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "neuro-judge"
+version = "0.1.0"
+description = "LLM-as-a-Judge evaluation framework. Multi-model, multi-criteria, with cost tracking and HTML reports."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+authors = [
+    { name = "Furqan Arshad", email = "furqaan.arshad@gmail.com" },
+]
+keywords = ["llm", "evaluation", "genai", "judge", "benchmark", "ml"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "click>=8.0",
+    "pydantic>=2.0",
+    "pyyaml>=6.0",
+    "jinja2>=3.0",
+    "python-dotenv>=1.0",
+    "httpx>=0.25",
+    "rich>=13.0",
+    "anthropic>=0.30",
+    "openai>=1.0",
+    "google-generativeai>=0.5",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "pytest-asyncio>=0.23", "ruff>=0.4"]
+
+[project.scripts]
+neuro-judge = "neuro_judge.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/furqan1pk/neuro-judge"
+Repository = "https://github.com/furqan1pk/neuro-judge"
+Issues = "https://github.com/furqan1pk/neuro-judge/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/neuro_judge"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
