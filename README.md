@@ -2,10 +2,47 @@
 
 **LLM-as-a-Judge evaluation framework.** Multi-model, multi-criteria, with cost tracking and beautiful HTML reports.
 
-Built from production experience evaluating 4 GenAI pipelines at scale.
+Built and battle-tested across 4 production GenAI evaluation pipelines.
 
 ```bash
 pip install neuro-judge
+```
+
+## What you get
+
+| | |
+|---|---|
+| Multi-judge consensus | Default: mean across 2+ judges. Configurable (median, min, weighted). |
+| Cost tracking | Tokens + dollars per criterion, per judge, per sample — visible in real time. |
+| Multimodal | Image inputs supported on Claude, GPT-4o, Gemini. |
+| HTML reports | Self-contained, shareable, with radar charts and per-sample reasoning. |
+| Async | Parallel judge calls. Concurrency configurable. |
+
+## Cost calculator
+
+Approximate cost for evaluating 1,000 samples on 3 criteria with a single judge (Sonnet 4.6, ~500-token input + 200-token output per sample):
+
+| Judge | Cost per 1k samples | Wall time @ concurrency=5 |
+|---|---|---|
+| Claude Haiku 4.5 | ~$1.50 | ~3 min |
+| Claude Sonnet 4.6 | ~$6.00 | ~5 min |
+| GPT-4o | ~$5.00 | ~5 min |
+| Claude Opus 4.7 | ~$30.00 | ~7 min |
+
+Two-judge consensus roughly doubles the cost. Numbers will vary with your prompt size — `neuro-judge` reports actual costs after each run.
+
+## Architecture
+
+```
+JSONL inputs
+   ↓
+Evaluator (config: judges + criteria + consensus rule)
+   ↓ async, per sample, per judge
+judge calls (httpx + retries)
+   ↓
+consensus aggregation (mean / median / min / weighted)
+   ↓
+HTML report (Jinja2) — radar charts, distributions, costs, reasoning
 ```
 
 ## Quick Start (60 seconds)
